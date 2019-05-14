@@ -11,18 +11,27 @@ allFiles = np.load('./data/all_data.npy')
 # batch sizes
 # learning Rate: speed of learning
 # Lamb: Lambda is the vector to eliminate varianza
+#weights = [np.random.randn(y, x)for x, y in zip(sizes[:-1], sizes[1:])]
+"""
+for x, y in zip(sizes[:-1], sizes[1:]):
+    self.weights.append(np.random.randn(y, x))
+"""
 def randomWB(layers):
     amount = len(layers)
-    weight = np.zeros([])
-    bias = np.array([])
-    for i in range(amount-1):
-        first = layers[i]
-        second = layers[i + 1]
-        print("first",first)
-        print("second",second)
-        weight=np.append(weight, np.zeros([second, first]))
-        np.append(bias,np.zeros(([layers[i+1]])))
+    weight=[]
+    bias=[]
+    for x,y in (layers[:-1],layers[1:]):
+        weight.append(np.random.randn(y,x))
+    for y in layers[1:]:
+        bias.append(np.random.randn(y,1))
     return weight,bias
+def slicer(data,sizeFraction):
+    sizeData =len(data)
+    batch=[]
+    for i in range(0,sizeData,sizeFraction):
+        batch.append(data[i:i+sizeFraction])
+    return batch
+
 def sigmoid(z):
     value = 1/(1+np.exp(-z))
     return value
@@ -42,30 +51,58 @@ class Network(object):
             for w in self.weight:
                 a = sigmoid((b @ w)+a)
         return a 
-    def cost(self, self.weight,self.bias):
+    def cost(self,outputActivation,y):
+        """
+        partial derivative of cost function. Returns vector for each run.               
+        """
+        sub=outputActivation-y
+        return sub
+
 
 
     #epochs: number of times training vectors are used. 
     #rate: learning rate of each iteration. 
     #mini_batch_size: size of each of the batches of data
-    def gradDescent(self,data, epochs,mini_batch_size,rate):
+    def descentApplication(self,data, epochs,mini_batch_size,rate):
         train=list(data)
         size=len(train)
         for i in range(epochs):
             shuffle(train)
-            mini_batches=[train[k:k + mini_batch_size] for j in range(0,size,mini_batch_size)]
+            mini_batches=slicer(train,mini_batch_size)
             for element in mini_batches:
-                self.setBatch(element,rate)
+                self.descent(element,rate)
     
-    def setBatch(sel,mini_batch,eta):
+    def descent(self,mini_batch,rate):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weight]
-
+        size_batch = len(mini_batch)
         for x,y in mini_batch:
             delta_nabla_b,delta_nabla_w = self.backpropagation(x,y)
-            nabla_b = []
-    
+            nabla_b = [nb+dnb for nb,dnb in zip(nabla_b,delta_nabla_b)]
+            nabla_w=[nw+dnw for nw,dnw in zip(nabla_w,delta_nabla_w)]
+        self.weight = [w-(rate/size_batch)*nw for w,nw in zip(self.weight,nabla_w)]
+        self.bias = [b-(rate/size_batch)*nb for b,nb in zip(self.bias,nabla_b)]
     def backpropagation(self,x,y):
+        nablaBias,nablaWeight=[],[]
+        for i in self.bias:
+            nablaBias=np.append(nablaBias,np.zeros(i.shape))
+        for i in self.weight:
+            nablaWeight=np.append(nablaWeight,np.zeros(i.shape))
+        activation=[x]
+        z=[]
+        for w,b in zip(self.weight,self.bias):
+            zValue=(w @ activation) + b
+            z.append(zValue)
+            activations=sigmoid(zValue)
+            activation.append(activations)
+        last=activation[-1]
+        delta=cost()
+
+        return nablaB,nablaW
+
+        
+
+
 
 
 
